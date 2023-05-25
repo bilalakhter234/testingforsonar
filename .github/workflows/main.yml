@@ -1,0 +1,64 @@
+name: SonarQube Scan
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+
+      - name: SonarQube Scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [[ -f "index.html" ]]; then
+            echo "Index.html file found."
+          else
+            echo "No changes to index.html."
+            exit 0
+          fi
+          if [ $? -eq 0 ]; then
+            echo "SonarQube scan success"
+          else
+            echo "SonarQube scan fail"
+            exit 1
+          fi
+
+      - name: Send email on failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.office365.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: SonarQube Scan Failure
+          body: |
+            The SonarQube scan has failed for the project.
+          from: testingsonarcube@outlook.com
+          to: noobtraderftx@gmail.com, noobtraderbinance@gmail.com
+
+      - name: Send email on success
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.office365.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: SonarQube Scan Success
+          body: |
+            The SonarQube scan has succeeded for the project.
+          from: testingsonarcube@outlook.com
+          to: noobtraderftx@gmail.com, noobtraderbinance@gmail.com
